@@ -30,7 +30,8 @@ class ZipReader():
         self.filename = os.path.join(_folder.name, member)
 
     def __del__(self):
-        os.remove(self.filename)
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
 ################################################################################
 # Decompression.

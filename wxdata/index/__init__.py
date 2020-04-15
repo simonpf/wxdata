@@ -7,8 +7,35 @@ import glob
 import pickle
 from tqdm import tqdm
 
-class File:
+################################################################################
+# FileRecord
+################################################################################
+
+class FileRecord:
+    """
+    A FileRecord hold a reference to an indexed data file. It holds
+    the filename, name of the products class as well as start and
+    end time.
+    Attributes:
+        product(:code:`str`): The name of the product class that the
+            file belongs to. None if filename couldn't be associated
+            to any product.
+        start_time(:code:`datetime`): Timestamp of the first data entry
+            in this file.
+        end_time(:code:`datetime`): Timestamp of the last data entry
+            in this file.
+    """
     def __init__(self, filename):
+        """
+        Create a file record from a given file name.
+
+        Determines the product type of the given filename and determines
+        product attribute. If that was successful opens the file and
+        extracts start and end time.
+
+        Arguments:
+            filename(:code:`str`): The filename of the file to index.
+        """
         self.filename = filename
         for c in all_products:
             name = os.path.basename(filename)
@@ -21,13 +48,30 @@ class File:
         self.product = None
 
     def make_relative(self, path):
+        """
+        Converts filename attribute into a relative path.
+
+        Arguments:
+            path(:code:`str`): The reference path to use to determine
+                the relative path.
+        """
         relpath = os.path.relpath(self.filename, start=path)
         self.filename = relpath
 
     def make_absolute(self, path):
+        """
+        Converts filename attribute into a absolute path.
+
+        Arguments:
+            path(:code:`str`): The reference path to use to convert
+                filename to relative path.
+        """
         self.filename = os.path.join(path, self.filename)
 
     def open(self):
+        """
+        Open data product corresponding to this record.
+        """
         if self.product is None:
             raise Exception("Cannot open file: Product is unknown.")
 
@@ -38,11 +82,27 @@ class File:
         return product
 
     def __repr__(self):
-        return self.product.__name__ + " file: " + self.filename
+        """
+        Pretty printing of data record.
+        """
+        return self.product + " file: " + self.filename
+
+################################################################################
+# FileRecord
+################################################################################
 
 class Index:
+    """
+    A file index holding references and meta data of different data products.
+
+    Attributes:
+        products: List of products available from this index.
+    """
 
     def __init__(self):
+        """
+        Create an index object.
+        """
         self._files = {}
 
     @property
@@ -51,6 +111,19 @@ class Index:
         pass
 
     def open(self, product, index):
+        """
+        Open given product file.
+
+        Arguments:
+            product(:code:`str` or product class): String or product
+                representing the product to select from the index.
+            index(:code:`int`): Index of the file of the given type
+                to open.
+
+        Returns:
+            Instance of the requested product type corresponding to
+            the file at index :code:`index`.
+        """
         product_names = [f.__name__ for f in all_products]
         if type(product) == str:
             if not product in product_names:
@@ -76,31 +149,53 @@ class Index:
 
 
     def generate(self, path):
+        """
+        Index file in folder tree.
+
+        Recursively traverses sub-folders of the provided path and indexes
+        all known data products.
+
+        Arguments:
+            path(:code:`str`): Root folder of the folder-tree to index.
+        """
+        path = os.path.expanduser(path)
         files = glob.glob(os.path.join(path, "**", "*"), recursive=True)
         print("Found {} files.".format(len(files)))
         for f in tqdm(files):
-            f = File(f)
+            f = FileRecord(f)
             if f.product:
                 if not f.product in self._files:
                     self._files[f.product] = []
                 self._files[f.product] += [f]
 
-    def store(self, path):
-        path = os.path.expanduser(path)
-        dir = os.path.abspath(os.path.dirname(path))
+    def store(self, filename):
+        """
+        Store index to disc.
+
+        Arguments:
+            filename(:code:`str`): Filename to which to store the index.
+        """
+        filename = os.path.expanduser(filename)
+        dir = os.path.abspath(os.path.dirname(filename))
 
         index = deepcopy(self)
         for k in index._files:
             for f in index._files[k]:
                 f.make_relative(dir)
 
-        pickle.dump(index, open(path, "wb"))
+        pickle.dump(index, open(filename, "wb"))
 
     @staticmethod
-    def load(path):
-        path = os.path.expanduser(path)
-        dir = os.path.abspath(os.path.dirname(path))
-        index =  pickle.load(open(path, "rb"))
+    def load(filename):
+        """
+        Load index from disc.
+
+        Arguments:
+            filename(:code:`str`): Filename from which to load the index.
+        """
+        filename = os.path.expanduser(filename)
+        dir = os.path.abspath(os.path.dirname(filename))
+        index =  pickle.load(open(filename, "rb"))
 
         for k in index._files:
             for f in index._files[k]:
@@ -108,10 +203,14 @@ class Index:
 
         return index
 
+    def __repr__(self):
+        s = ":: wxdata file index ::"
+        for p in self.products:
+            s += "\n\t" + self.product
+            s += " (" + self._files[self.product] + ")"
 
-path = "/home/simonpf/Dendrite/SatData/CloudSat/2B-GEOPROF.R04/"
+
+
 index = Index()
+path = "~/Dendrite/SatData/CloudSat/2B-GEOPROF.R04/2015"
 index.generate(path)
-
-
-
