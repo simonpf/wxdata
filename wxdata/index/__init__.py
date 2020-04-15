@@ -1,11 +1,13 @@
-import wxdata
-from wxdata.products import all_products
-from wxdata.readers import decompress
-from copy import deepcopy
 import os
 import glob
 import pickle
+from copy import deepcopy
+from datetime import datetime
 from tqdm import tqdm
+
+import wxdata
+from wxdata.products import all_products
+from wxdata.readers import decompress
 
 ################################################################################
 # FileRecord
@@ -168,6 +170,31 @@ class Index:
                     self._files[f.product] = []
                 self._files[f.product] += [f]
 
+    def get_files(self, product, start=None, end=None):
+        if not product in self.products:
+            raise ValueError("{} is not available from this index. Available"
+                             " products are {}.".format(self.products))
+
+        if not (isinstance(start, datetime) or start is None):
+            raise ValueError("start keyword argument must be a datetime object "
+                             " or None.")
+
+        if not (isinstance(end, datetime) or start is None):
+            raise ValueError("end keyword argument must be a datetime object "
+                             " or None.")
+
+        files = self._files[product]
+        if start is None and end is None:
+            return files
+
+        in_range = []
+        for f in files:
+            if not start is None and f.end_time >= start:
+                if not end is None and f.start_time < end:
+                    in_range += [f]
+
+        return in_range
+
     def store(self, filename):
         """
         Store index to disc.
@@ -204,13 +231,12 @@ class Index:
         return index
 
     def __repr__(self):
-        s = ":: wxdata file index ::"
+        s = ":: wxdata file index ::\n"
+        s += "\nAvailable products:"
         for p in self.products:
-            s += "\n\t" + self.product
-            s += " (" + self._files[self.product] + ")"
+            s += "\n\t" + p
+            s += " (" + str(len(self._files[p])) + ")"
+        s += "\n"
+        return s
 
-
-
-index = Index()
-path = "~/Dendrite/SatData/CloudSat/2B-GEOPROF.R04/2015"
-index.generate(path)
+index = Index.load("~/Dendrite/SatData/CloudSat/2b_geoprof.index")

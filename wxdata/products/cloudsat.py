@@ -39,12 +39,24 @@ class CloudSatBase(Hdf4File):
     @property
     def date(self):
         """
-        datetime object corresponding to the day of the first profile in
-        the file.
+        datetime object corresponding to 00:00:00 on the day of the first
+        profile in the file.
         """
         date = self.__class__.pattern.match(os.path.basename(self.filename)).group(1)
         date = datetime.strptime(date, "%Y%j%H%M%S")
-        return date
+        return datetime(year=date.year, month=date.month, day=date.day)
+
+    @property
+    def latitude(self):
+        np.array(self.attributes["Latitude"], dtype=np.float16)
+
+    @property
+    def longitude(self):
+        np.array(self.attributes["Longitude"], dtype=np.float16)
+
+    @property
+    def altitude(self):
+        np.array(self.attributes["Height"], dtype=np.float16)
 
 ################################################################################
 # Level 1b
