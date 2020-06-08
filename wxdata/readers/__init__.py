@@ -9,14 +9,6 @@ import zipfile
 
 _folder = tempfile.TemporaryDirectory()
 
-def cleanup():
-    try:
-        global _folder
-        os.rmdir(_folder.name)
-    except:
-        pass
-atexit.register(cleanup)
-
 ################################################################################
 # Zip file.
 ################################################################################

@@ -48,15 +48,15 @@ class CloudSatBase(Hdf4File):
 
     @property
     def latitude(self):
-        np.array(self.attributes["Latitude"], dtype=np.float16)
+        return np.array(self["Latitude"][:], dtype=np.float16)
 
     @property
     def longitude(self):
-        np.array(self.attributes["Longitude"], dtype=np.float16)
+        return np.array(self["Longitude"][:], dtype=np.float16)
 
     @property
     def altitude(self):
-        np.array(self.attributes["Height"], dtype=np.float16)
+        return np.array(self["Height"][:], dtype=np.float16)
 
 ################################################################################
 # Level 1b
