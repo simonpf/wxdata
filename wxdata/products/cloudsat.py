@@ -13,6 +13,12 @@ class CloudSatBase(Hdf4File):
     """
     Base class for CloudSat files.
     """
+    @staticmethod
+    def name_to_date(name):
+        name = os.path.basename(name)
+        name = name.split("_")[0]
+        return datetime.strptime(name, "%Y%j%H%M%S")
+
     def __init__(sefl, filename):
         super().__init__(filename)
 
@@ -105,8 +111,25 @@ class CloudSat_2b_GeoProf(CloudSatBase):
         This property contains the radar reflectivities in dBZe units. Values
         have been divided with a factor of 100 w.r.t. to the raw data and
         missing values have been masked.
+
+        In addition to this, values outside the range given in [1]_ are masked.
         """
         raw_data = self["Radar_Reflectivity"][:]
-        mask = raw_data == -8888
         data = np.array(raw_data, dtype=np.float32) / 100.0
+        mask = raw_data <= -8888
+        data = np.maximum(data, -40)
+        data = np.minimum(data, 50)
         return ma.masked_array(data, mask=mask)
+
+class CloudSat_Modis_Aux(CloudSatBase):
+
+    pattern = re.compile("([\d]*)_([\d]*)_CS_MODIS-AUX_GRANULE_P_R([\d]*)_E([\d]*)\.*")
+
+    def __init__(self, filename):
+        """
+        Args:
+            filename(:code:`filename`): Full path of the HDF4 file containing the
+                data.
+
+        """
+        super().__init__(filename)
