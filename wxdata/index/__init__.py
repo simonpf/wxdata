@@ -164,11 +164,14 @@ class Index:
         files = glob.glob(os.path.join(path, "**", "*"), recursive=True)
         print("Found {} files.".format(len(files)))
         for f in tqdm(files):
-            f = FileRecord(f)
-            if f.product:
-                if not f.product in self._files:
-                    self._files[f.product] = []
-                self._files[f.product] += [f]
+            try:
+                f = FileRecord(f)
+                if f.product:
+                    if not f.product in self._files:
+                        self._files[f.product] = []
+                    self._files[f.product] += [f]
+            except:
+                pass
 
     def get_files(self, product, start=None, end=None):
         if not product in self.products:
@@ -238,5 +241,3 @@ class Index:
             s += " (" + str(len(self._files[p])) + ")"
         s += "\n"
         return s
-
-index = Index.load("~/Dendrite/SatData/CloudSat/2b_geoprof.index")
