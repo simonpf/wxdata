@@ -133,3 +133,23 @@ class CloudSat_Modis_Aux(CloudSatBase):
 
         """
         super().__init__(filename)
+
+    @property
+    def emissivity_channels(self):
+        """
+        Scaled emissivity.
+
+        This property contains the corrected emissivities of the
+        MODIS long wave channels.
+        """
+        raw_data = np.float32(self["EV_1KM_Emissive"][:])
+        mask = self["EV_1KM_Emissive"][:] >= 32768
+        for i in range(raw_data.shape[-1]):
+            granule_indices = self["MODIS_granule_index"][:, i]
+            offsets = self["EV_1KM_Emissive_rad_offsets"][:][:, granule_indices]
+            mask[:, :, i] += offsets == -999
+            scales = self["EV_1KM_Emissive_rad_scales"][:][:, granule_indices]
+            mask[:, :, i] += scales == -999
+            raw_data[:, :, i] -= offsets
+            raw_data[:, :, i] *= scales
+        return np.ma.masked_array(raw_data, mask=mask)
