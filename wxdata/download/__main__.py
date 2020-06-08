@@ -82,7 +82,11 @@ def main():
                     os.makedirs(dest)
                 t0 = datetime(y, m, d + 1)
                 t1 = t0 + timedelta(days=1)
-                files = provider.get_files_in_range(t0, t1)
+                try:
+                    files = provider.get_files_in_range(t0, t1)
+                except:
+                    print("No files found.")
+                    continue
                 for f in tqdm.tqdm(files):
                     provider.download(f, os.path.join(dest, f))
 

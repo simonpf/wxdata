@@ -247,20 +247,20 @@ class IcareProvider(DataProvider):
 
         """
         if not path in self.cache:
-            try:
-                with FTP(IcareProvider.base_url) as ftp:
-                    identity = get_identity("Icare")
-                    ftp.login(user = identity["user"],
-                            passwd = identity["password"])
-                    try:
-                        ftp.cwd(path)
-                    except:
-                        raise Exception("Can't find product folder " + path  +
-                                        "on the ICARE ftp server.. Are you sure this is"
-                                        "a  ICARE multi sensor product?")
-                    ls = ftp.nlst()
-            except:
-                ls = []
+            #try:
+            with FTP(IcareProvider.base_url) as ftp:
+                identity = get_identity("Icare")
+                ftp.login(user = identity["user"],
+                        passwd = identity["password"])
+                try:
+                    ftp.cwd(path)
+                except:
+                    raise Exception("Can't find product folder " + path  +
+                                    "on the ICARE ftp server.. Are you sure this is"
+                                    "a  ICARE multi sensor product?")
+                ls = ftp.nlst()
+            #except:
+            #    ls = []
             ls = [t(l) for l in ls]
             self.cache[path] = ls
         return self.cache[path]
